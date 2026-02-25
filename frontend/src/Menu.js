@@ -26,39 +26,30 @@ import donut from "./Images/donut.jpg";
 import jamun from "./Images/jamun.jpg";
 
 function Menu({ addToCart }) {
+
   const [items, setItems] = useState([]);
   const [category, setCategory] = useState("All");
+  const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ NEW: GET SEARCH FROM URL (?search=burger)
   const query = new URLSearchParams(location.search);
   const searchItem = query.get("search") || "";
 
- useEffect(() => {
-  axios
-    .get(process.env.REACT_APP_API_URL + "/products")
-    .then((res) => {
-      setItems(res.data);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-}, []);
+  useEffect(() => {
+    axios.get(process.env.REACT_APP_API_URL + "/products")
+      .then((res) => {
+        setItems(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+      });
+  }, []);
 
-  // ✅ FILTER LOGIC (CATEGORY + SEARCH)
-  const filteredItems = items.filter((item) => {
-    const matchCategory =
-      category === "All" || item.category === category;
-
-    const matchSearch =
-      item.name.toLowerCase().includes(searchItem.toLowerCase());
-
-    return matchCategory && matchSearch;
-  });
-
-  // ✅ IMAGE FUNCTION
+  // IMAGE FUNCTION ✅ (INSIDE component)
   const getImage = (name) => {
     switch (name) {
       case "Burger": return burger;
@@ -84,6 +75,20 @@ function Menu({ addToCart }) {
     }
   };
 
+  // FILTER
+  const filteredItems = items.filter((item) => {
+    const matchCategory =
+      category === "All" || item.category === category;
+
+    const matchSearch =
+      item.name.toLowerCase().includes(searchItem.toLowerCase());
+
+    return matchCategory && matchSearch;
+  });
+
+  // LOADING
+  if (loading) return <h2>Loading...</h2>;
+
   return (
     <>
       {/* TOP BAR */}
@@ -94,7 +99,7 @@ function Menu({ addToCart }) {
         </button>
       </div>
 
-      {/* CATEGORY BAR */}
+      {/* CATEGORY */}
       <div className="category-bar">
         <button onClick={() => setCategory("All")}>All</button>
         <button onClick={() => setCategory("Fast Food")}>Fast Food</button>
@@ -104,7 +109,7 @@ function Menu({ addToCart }) {
         <button onClick={() => setCategory("Dessert")}>Dessert</button>
       </div>
 
-      {/* FOOD LIST */}
+      {/* PRODUCTS */}
       <div className="food-container">
         {filteredItems.length === 0 ? (
           <h3 style={{ textAlign: "center" }}>No items found 😢</h3>
@@ -112,7 +117,6 @@ function Menu({ addToCart }) {
           filteredItems.map((item, index) => (
             <div className="food-card" key={index}>
               <img src={getImage(item.name)} alt={item.name} />
-
               <h3>{item.name}</h3>
               <p>{item.category}</p>
               <h4>₹{item.price}</h4>
