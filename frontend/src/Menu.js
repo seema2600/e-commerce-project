@@ -36,12 +36,16 @@ function Menu({ addToCart }) {
   const query = new URLSearchParams(location.search);
   const searchItem = query.get("search") || "";
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:5000/products")
-      .then((res) => setItems(res.data))
-      .catch((err) => console.log(err));
-  }, []);
+ useEffect(() => {
+  axios
+    .get(process.env.REACT_APP_API_URL + "/products")
+    .then((res) => {
+      setItems(res.data);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}, []);
 
   // ✅ FILTER LOGIC (CATEGORY + SEARCH)
   const filteredItems = items.filter((item) => {
