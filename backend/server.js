@@ -3,42 +3,67 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 
 const app = express();
+
+/* ===== MIDDLEWARE ===== */
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect("mongodb://127.0.0.1:27017/ecommerce")
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+/* ===== ROOT ROUTE (IMPORTANT FOR DEPLOYMENT) ===== */
+app.get("/", (req, res) => {
+  res.send("API Running 🚀");
+});
 
+/* ===== DATABASE CONNECTION ===== */
+// ⚠️ Replace this with MongoDB Atlas URL when deploying
+const MONGO_URI =
+  process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ecommerce";
+
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log("MongoDB Connected ✅"))
+  .catch((err) => console.log(err));
+
+/* ===== USER SCHEMA ===== */
 const UserSchema = new mongoose.Schema({
   email: String,
-  password: String
+  password: String,
 });
 
 const User = mongoose.model("User", UserSchema);
 
-/* REGISTER */
+/* ===== REGISTER ===== */
 app.post("/register", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const exists = await User.findOne({ email });
-  if (exists) return res.json({ message: "User already exists ❌" });
+    const exists = await User.findOne({ email });
+    if (exists)
+      return res.json({ message: "User already exists ❌" });
 
-  await new User({ email, password }).save();
-  res.json({ message: "User Registered Successfully ✅" });
+    await new User({ email, password }).save();
+
+    res.json({ message: "User Registered Successfully ✅" });
+  } catch (err) {
+    res.status(500).json({ message: "Error registering user ❌" });
+  }
 });
 
-/* LOGIN */
+/* ===== LOGIN ===== */
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = await User.findOne({ email, password });
+    const user = await User.findOne({ email, password });
 
-  if (user) res.json({ message: "Login Successful ✅" });
-  else res.json({ message: "Invalid Credentials ❌" });
+    if (user)
+      res.json({ message: "Login Successful ✅" });
+    else res.json({ message: "Invalid Credentials ❌" });
+  } catch (err) {
+    res.status(500).json({ message: "Login error ❌" });
+  }
 });
 
-/* PRODUCTS WITH IMAGES */
+/* ===== PRODUCTS ===== */
 app.get("/products", (req, res) => {
   res.json([
     { id: 1, name: "Burger", price: 149, category: "Fast Food" },
@@ -64,8 +89,13 @@ app.get("/products", (req, res) => {
     { id: 17, name: "Cake", price: 150, category: "Dessert" },
     { id: 18, name: "Brown Cake", price: 170, category: "Dessert" },
     { id: 19, name: "Donut", price: 80, category: "Dessert" },
-    { id: 20, name: "Jamun", price: 90, category: "Dessert" }
+    { id: 20, name: "Jamun", price: 90, category: "Dessert" },
   ]);
-});                  
+});
 
-app.listen(5000, () => console.log("Server running on 5000"));
+/* ===== PORT FIX (VERY IMPORTANT) ===== */
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () =>
+  console.log(`Server running on ${PORT} 🚀`)
+);
